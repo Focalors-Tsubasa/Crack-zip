@@ -1,0 +1,51 @@
+name: Crack ZIP password from hash.txt (Testing)
+
+on:
+  push:
+    paths:
+      - 'thai.zip'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  crack-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: 🔧 Install Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libssl-dev git wget
+
+    - name: 🧬 Clone John the Ripper
+      run: |
+        git clone https://github.com/openwall/john.git
+        cd john/src
+        ./configure
+        make -sj$(nproc)
+
+    - name: 🔄 Convert thai.zip to hash.txt
+      run: |
+        cd john/run
+        ./zip2john ../../thai.zip > hash.txt
+        echo "::group::🔐 HASH CONTENT"
+        cat hash.txt
+        echo "::endgroup::"
+
+    - name: 📥 Download rockyou.txt wordlist
+      run: |
+        cd john/run
+        wget https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt
+
+    - name: 🚀 Crack ZIP password using John
+      run: |
+        cd john/run
+        ./john hash.txt --wordlist=rockyou.txt
+
+    - name: 🪄 Show Cracked Passwords
+      run: |
+        cd john/run
+        ./john --show hash.txt
