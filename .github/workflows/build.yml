@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: 🔧 Install dependencies
       run: |
@@ -47,7 +47,7 @@ jobs:
         7z x thai.zip -p"${{ env.PASS }}" -oextracted
 
     - name: 📦 Upload extracted files as artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: extracted-files
         path: extracted/
