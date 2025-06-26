@@ -23,11 +23,13 @@ jobs:
         ./configure
         make -sj$(nproc)
 
-    - name: 🔄 Run zip2john
+    - name: 🔄 Convert thai.zip to hash.txt
       run: |
         cd john/run
-        ./zip2john ../../${{ github.event.inputs.zip_file }} > zip.hash
-        cat zip.hash
+        ./zip2john ../../thai.zip > hash.txt
+        echo "::group::🔐 HASH CONTENT"
+        cat hash.txt
+        echo "::endgroup::"
 
     - name: 🔐 Crack ZIP password from hash.txt
       run: |
