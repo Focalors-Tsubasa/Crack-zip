@@ -1,27 +1,22 @@
-name: Crack ZIP password
+name: Crack and Extract ZIP
 
 on:
   workflow_dispatch:
-    inputs:
-      zip_file:
-        description: 'Path to the ZIP file (in the repo)'
-        required: true
-        default: 'thai.zip'
 
 jobs:
-  crack-zip:
+  crack-and-extract:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Checkout Repository
+    - name: 📥 Checkout repository
       uses: actions/checkout@v3
 
-    - name: 🔧 Install Build Dependencies
+    - name: 🔧 Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential libssl-dev git
+        sudo apt install -y build-essential libssl-dev git p7zip-full wget
 
-    - name: 🧬 Clone John the Ripper
+    - name: 🧬 Clone John the Ripper and build it
       run: |
         git clone https://github.com/openwall/john.git
         cd john/src
@@ -34,10 +29,25 @@ jobs:
         ./zip2john ../../${{ github.event.inputs.zip_file }} > zip.hash
         cat zip.hash
 
-    - name: 🚀 Crack password with rockyou
+    - name: 🔐 Crack ZIP password from hash.txt
       run: |
         cd john/run
-        sudo apt install -y wget
         wget https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt
-        ./john zip.hash --wordlist=rockyou.txt
-        ./john --show zip.hash
+        ./john ../../hash.txt --wordlist=rockyou.txt
+        ./john --show ../../hash.txt > ../../password.txt
+
+    - name: 📖 Read cracked password
+      id: getpass
+      run: |
+        echo "PASS=$(grep -oP ':.*' password.txt | cut -c2-)" >> $GITHUB_ENV
+
+    - name: 🧨 Extract ZIP using cracked password
+      run: |
+        mkdir extracted
+        7z x thai.zip -p"${{ env.PASS }}" -oextracted
+
+    - name: 📦 Upload extracted files as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: extracted-files
+        path: extracted/
