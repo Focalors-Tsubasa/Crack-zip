@@ -43,7 +43,7 @@ jobs:
     - name: 🚀 Crack ZIP password using John
       run: |
         cd john/run
-        ./john hash.txt --wordlist=rockyou.txt
+        ./john hash.txt
 
     - name: 🪄 Show Cracked Passwords
       run: |
