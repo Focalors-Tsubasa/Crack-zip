@@ -1,0 +1,43 @@
+name: Crack ZIP password
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip_file:
+        description: 'Path to the ZIP file (in the repo)'
+        required: true
+        default: 'thai.zip'
+
+jobs:
+  crack-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: 🔧 Install Build Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libssl-dev git
+
+    - name: 🧬 Clone John the Ripper
+      run: |
+        git clone https://github.com/openwall/john.git
+        cd john/src
+        ./configure
+        make -sj$(nproc)
+
+    - name: 🔄 Run zip2john
+      run: |
+        cd john/run
+        ./zip2john ../../${{ github.event.inputs.zip_file }} > zip.hash
+        cat zip.hash
+
+    - name: 🚀 Crack password with rockyou
+      run: |
+        cd john/run
+        sudo apt install -y wget
+        wget https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt
+        ./john zip.hash --wordlist=rockyou.txt
+        ./john --show zip.hash
